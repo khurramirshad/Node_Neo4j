@@ -5,13 +5,18 @@
   <title>Neo4j D3 Visualization</title>
   <script src="https://d3js.org/d3.v6.min.js"></script>
   <style>
-    .node { stroke: #3a1eba; stroke-width: 1.5px; }
+    .node { 
+        fill:none;
+        stroke: #3a1eba; 
+        stroke-width: 1.5px;         
+        pointer-events: all; /* Ensure the element is interactive */
+    }
     .link { stroke: #999; stroke-opacity: 0.6; }
-    .tit {stroke: #86898b; stroke-opacity: 0.6;}
+   
   </style>
 </head>
 <body>
-  <svg width="960" height="600" border="1px"></svg>
+  <svg width="960" height="600" border="1px solid #3a1eba"></svg>
   <script>
     fetch('/api/data')
       .then(response => response.json())
@@ -27,26 +32,36 @@
 
         const link = svg.append("g")
             .attr("class", "links")
-          .selectAll("line")
-          .data(graph.links)
-          .enter().append("line")
+            .selectAll("line")
+            .data(graph.links)
+            .enter().append("line")
             .attr("class", "link");
 
-        const node = svg.append("g")
-            .attr("class", "nodes")
-          .selectAll("circle")
-          .data(graph.nodes)
-          .enter().append("circle")
-            .attr("class", "node")
-            .attr("r", 5)
-            .call(d3.drag()
-                .on("start", dragstarted)
-                .on("drag", dragged)
-                .on("end", dragended));
+            const node = svg.append("g")
+    .attr("class", "nodes")
+    .selectAll("circle")
+    .data(graph.nodes)
+    .enter().append("circle")
+    .attr("class", "node")
+    .attr("r", 5)
+    .style("fill", function(d) {
+        if (d.type == "Commit") {
+            return "red";
+        } else if (d.type == "Class") {
+            return "blue";
+        } else {
+            return "green";
+        }
+    })
+    .call(d3.drag()
+        .on("start", dragstarted)
+        .on("drag", dragged)
+        .on("end", dragended));
 
-        node.append("title")
-            .text(d => d.Name)
-            .attr("class","tit");
+
+       
+        
+            
 
         simulation
             .nodes(graph.nodes)
