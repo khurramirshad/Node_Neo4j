@@ -16,6 +16,6 @@ const fetchData = require('./data');
 
 app.get('/api/data', async (req, res) => {
   const data = await fetchData();
-  console.log(data);
+  //console.log(data.nodes[0].labels);
   res.json(data);
 });
