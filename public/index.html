@@ -5,12 +5,13 @@
   <title>Neo4j D3 Visualization</title>
   <script src="https://d3js.org/d3.v6.min.js"></script>
   <style>
-    .node { stroke: #fff; stroke-width: 1.5px; }
+    .node { stroke: #3a1eba; stroke-width: 1.5px; }
     .link { stroke: #999; stroke-opacity: 0.6; }
+    .tit {stroke: #86898b; stroke-opacity: 0.6;}
   </style>
 </head>
 <body>
-  <svg width="960" height="600"></svg>
+  <svg width="960" height="600" border="1px"></svg>
   <script>
     fetch('/api/data')
       .then(response => response.json())
@@ -44,7 +45,8 @@
                 .on("end", dragended));
 
         node.append("title")
-            .text(d => d.Name);
+            .text(d => d.Name)
+            .attr("class","tit");
 
         simulation
             .nodes(graph.nodes)
