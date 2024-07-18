@@ -1,0 +1,28 @@
+.node {
+    fill: none;
+    stroke: #3a1eba;
+    stroke-width: 1.5px;
+    pointer-events: all;
+    /* Ensure the element is interactive */
+}
+
+.link {
+    stroke: #999;
+    stroke-opacity: 0.6;
+}
+
+.label {
+    font-family: Arial, sans-serif;
+    font-size: 5px;
+    fill: #e1d6d6;
+    text-anchor: middle;
+    /* Center the text */
+    dominant-baseline: middle;
+    /* Vertically center the text */
+
+}
+
+svg {
+    border: 2px solid #3a1eba;
+}
+
