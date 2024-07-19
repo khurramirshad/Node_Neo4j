@@ -26,9 +26,17 @@ app.listen(port, () => {
 });
 
 const fetchData = require('./data');
+const fetchtreeData = require('./treedata');
+
 
 app.get('/api/data', async (req, res) => {
   const data = await fetchData();
   //console.log(data.nodes[0].labels);
   res.json(data);
+});
+
+app.get('/api/treedata', async (req, res) => {
+    const data1 = await fetchtreeData();
+   // console.log(data1);
+    res.json(data1);
 });

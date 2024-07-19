@@ -1,5 +1,5 @@
 document.getElementById('loadGraphBtn').addEventListener('click', getFullGraph);
-document.getElementById('loadLayerGraphBtn').addEventListener('click', getLayedData);
+document.getElementById('loadLayerGraphBtn').addEventListener('click', getFulltreeGraph);
 
 
 
@@ -157,4 +157,65 @@ function getLayedData() {
         .style("text-anchor", d => d.children ? "end" : "start")
         .text(d => d.data.name);
 
+}
+
+async function getFulltreeGraph() {
+    try {
+        const response = await fetch('/api/treedata');
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const text = await response.text();
+        console.log(text);
+        let root;
+        try {
+            root = JSON.parse(text);
+        } catch (jsonError) {
+            throw new Error('Malformed JSON data');
+        }
+
+        const svg = d3.select("svg"),
+            width = +svg.attr("width"),
+            height = +svg.attr("height");
+
+        svg.selectAll("*").remove();
+
+        const g = svg.append("g").attr("transform", "translate(40,0)");
+
+        const tree = d3.tree().size([height, width - 160]);
+
+        const rootNode = d3.hierarchy(root);
+
+        tree(rootNode);
+
+        const link = g.selectAll(".link")
+            .data(rootNode.descendants().slice(1))
+            .enter().append("path")
+            .attr("class", "link")
+            .attr("d", d => `
+                M${d.y},${d.x}
+                C${(d.y + d.parent.y) / 2},${d.x}
+                 ${(d.y + d.parent.y) / 2},${d.parent.x}
+                 ${d.parent.y},${d.parent.x}
+            `);
+
+        const node = g.selectAll(".node")
+            .data(rootNode.descendants())
+            .enter().append("g")
+            .attr("class", d => "node" + (d.children ? " node--internal" : " node--leaf"))
+            .attr("transform", d => `translate(${d.y},${d.x})`);
+
+        node.append("circle")
+            .attr("r", 10);
+
+        node.append("text")
+            .attr("dy", 3)
+            .attr("x", d => d.children ? -12 : 12)
+            .style("text-anchor", d => d.children ? "end" : "start")
+            .text(d => d.data.properties.Name);
+    } catch (error) {
+        console.error('Error fetching or processing tree data:', error);
+    }
 }
