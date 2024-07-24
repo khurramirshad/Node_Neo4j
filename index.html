@@ -9,24 +9,32 @@
     <link rel="stylesheet" href="/css/bootstrap.min.css">
 
     <style>
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+        }
 
+        .full-height {
+            height: 100%;
+        }
     </style>
 </head>
 
 <body>
-    <div class="container">
+    <div class="container-fluid full-height">
         <div class="row">
             <div class="row">
                 <div class="col-12 col-md-12 col-lg-12">
                     <div class="p-3 border bg-light"></div>
                 </div>
-                
-            </div>
+
+            </div></br>
             <div class="col-sm-12 col-md-6 col-lg-2">
                 <div class="p-3 border bg-light">Column 1</div>
             </div>
             <div class="col-sm-12 col-md-6 col-lg-8">
-                <div class="p-3 border bg-light"> <svg width="1000" height="700"></svg></div>
+                <div class="p-3 border bg-light"> <svg id="graph" width="1050" height="700"></svg></div>
             </div>
             <div class="col-sm-12 col-md-6 col-lg-2">
                 <div class="p-3 border bg-light">

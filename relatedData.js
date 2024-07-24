@@ -5,31 +5,26 @@ const PASSWORD = '12345678';
 
 const driver = neo4j.driver(URI, neo4j.auth.basic(USER, PASSWORD));
 
-async function fetchRootNode() {
+async function fetchDevelopers() {
     const session = driver.session();
     try {
-       const result = await session.run('MATCH (root:Project) RETURN root LIMIT 1');
-       // const result = await session.run('MATCH (n)-[r]->(m) RETURN n, r, m');
+        const result = await session.run("MATCH (developer:Developer)-[:WORKS_ON]->(project:Project {ProjectId: 'FoodDeliveryProject'}) RETURN developer");
 
         if (result.records.length === 0) {
             throw new Error('No records found');
         }
 
-        const rootRecord = result.records[0];
-        const root = rootRecord.get('root');
+        const developers = result.records.map(record => {
+            const developer = record.get('developer');
+            return {
+                id: developer.identity.low,
+                labels: developer.labels,
+                properties: developer.properties
+            };
+        });
 
-        if (!root) {
-            throw new Error('Root node is undefined');
-        }
-
-        const rootNode = {
-            id: root.identity.low,
-            labels: root.labels,
-            properties: root.properties
-        };
-
-        console.log(rootNode);
-        return rootNode;
+        console.log(developers);
+        return developers;
     } catch (error) {
         console.error('Error fetching data:', error);
         throw error; // Re-throw the error after logging it
@@ -43,4 +38,4 @@ process.on('exit', async () => {
     await driver.close();
 });
 
-module.exports = fetchRootNode;
+module.exports = fetchDevelopers;

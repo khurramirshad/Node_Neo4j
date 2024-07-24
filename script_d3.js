@@ -1,5 +1,6 @@
 document.getElementById('loadGraphBtn').addEventListener('click', getFullGraph);
-document.getElementById('loadLayerGraphBtn').addEventListener('click', getFulltreeGraph);
+document.getElementById('loadLayerGraphBtn').addEventListener('click', getRootNode);
+//document.getElementById('loadLayerGraphBtn').addEventListener('click', getLayedData);
 
 
 
@@ -11,8 +12,6 @@ function getFullGraph() {
             const svg = d3.select("svg"),
                 width = +svg.attr("width"),
                 height = +svg.attr("height");
-
-
 
             svg.selectAll("*").remove();
 
@@ -159,16 +158,100 @@ function getLayedData() {
 
 }
 
-async function getFulltreeGraph() {
+// Define the drag behavior
+const drag = d3.drag()
+    .on("start", function(event, d) {
+        d3.select(this).raise().attr("stroke", "black");
+    })
+    .on("drag", function(event, d) {
+        if (d) {
+            d.x = event.x;
+            d.y = event.y;
+            d3.select(this).attr("transform", `translate(${d.x},${d.y})`);
+            updateLinks();
+        }
+    })
+    .on("end", function(event, d) {
+        d3.select(this).attr("stroke", null);
+    });
+
+function updateLinks() {
+    d3.selectAll(".link").attr("d", function(d) {
+        const source = d.source;
+        const target = d.target;
+        return `
+            M${source.x},${source.y}
+            C${source.x},${(source.y + target.y) / 2}
+             ${target.x},${(source.y + target.y) / 2}
+             ${target.x},${target.y}
+        `;
+    });
+}
+
+async function handleClick(event, d) {
+    console.log('Node clicked:', d);
+    alert(`Node clicked: ${d}`);
+
+    const developers = await fetch('/api/relatedData').then(res => res.json());
+    if (!Array.isArray(developers)) {
+        throw new Error('Expected an array of developers');
+    }
+    const svg = d3.select("#graph");
+    const projectNode = svg.select(`#node-${d.data.id}`); // Use the correct ID selector
+
+    // Get the bounding box of node 0
+    const bbox = projectNode.node().getBBox();
+    const projectNodeX = bbox.x + bbox.width / 2;
+    const projectNodeY = bbox.y + bbox.height / 2;
+
+    developers.forEach((developer, index) => {
+        const newNodeX = projectNodeX + 100; // Adjust the position as needed
+        const newNodeY = projectNodeY + 50 * (index + 1); // Adjust the position as needed
+
+        const newNode = svg.append("g")
+            .attr("class", "node")
+            .attr("transform", `translate(${newNodeX},${newNodeY})`)
+            .call(drag); // Apply the drag behavior
+
+        newNode.append("rect")
+            .attr("width", 100)
+            .attr("height", 40)
+            .attr("x", -30)
+            .attr("y", -10)
+            .attr("id", `node-${developer.id}`)
+            .attr("class", "child-node")
+            .on("click", (event, d) => handleClick(event, developer)); // Ensure the correct data is passed
+
+        newNode.append("text")
+            .attr("dy", 3)
+            .attr("x", 0)
+            .style("text-anchor", "middle")
+            .text(developer.properties.Name);
+
+        // Draw the link
+        svg.append("path")
+            .attr("class", "link")
+            .datum({ source: { x: projectNodeX, y: projectNodeY }, target: { x: newNodeX, y: newNodeY } })
+            .attr("d", `
+                M${projectNodeX},${projectNodeY}
+                C${projectNodeX},${(projectNodeY + newNodeY) / 2}
+                 ${newNodeX},${(projectNodeY + newNodeY) / 2}
+                 ${newNodeX},${newNodeY}
+            `);
+    });
+
+    updateLinks();
+}
+
+async function getRootNode() {
     try {
         const response = await fetch('/api/treedata');
-        
+
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
 
         const text = await response.text();
-        console.log(text);
         let root;
         try {
             root = JSON.parse(text);
@@ -182,39 +265,31 @@ async function getFulltreeGraph() {
 
         svg.selectAll("*").remove();
 
-        const g = svg.append("g").attr("transform", "translate(40,0)");
-
-        const tree = d3.tree().size([height, width - 160]);
+        const margin = { top: 20, right: 0, bottom: 0, left: 0 };
+        const g = svg.append("g").attr("transform", `translate(40,${margin.top})`);
 
         const rootNode = d3.hierarchy(root);
 
-        tree(rootNode);
+        const node = g.append("g")
+            .attr("class", "node root-node");
+            //.attr("transform", `translate(${width / 2},${height / 2})`);
 
-        const link = g.selectAll(".link")
-            .data(rootNode.descendants().slice(1))
-            .enter().append("path")
-            .attr("class", "link")
-            .attr("d", d => `
-                M${d.y},${d.x}
-                C${(d.y + d.parent.y) / 2},${d.x}
-                 ${(d.y + d.parent.y) / 2},${d.parent.x}
-                 ${d.parent.y},${d.parent.x}
-            `);
-
-        const node = g.selectAll(".node")
-            .data(rootNode.descendants())
-            .enter().append("g")
-            .attr("class", d => "node" + (d.children ? " node--internal" : " node--leaf"))
-            .attr("transform", d => `translate(${d.y},${d.x})`);
-
-        node.append("circle")
-            .attr("r", 10);
+        node.append("rect")
+            .attr("width", 150)
+            .attr("height", 40)
+            .attr("x", -50)
+            .attr("y", -20)
+            .attr("id", `node-${rootNode.data.id}`)
+            .attr("class", "root-node")
+            .on("click", (event, d) => handleClick(event, rootNode));
 
         node.append("text")
             .attr("dy", 3)
-            .attr("x", d => d.children ? -12 : 12)
-            .style("text-anchor", d => d.children ? "end" : "start")
-            .text(d => d.data.properties.Name);
+            .attr("x", 0)
+            .style("text-anchor", "middle")
+            .text(rootNode.data.properties.Name);
+
+        console.log('Root Node:', node);
     } catch (error) {
         console.error('Error fetching or processing tree data:', error);
     }

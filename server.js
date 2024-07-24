@@ -15,11 +15,11 @@ app.use('/js', express.static(path.join(__dirname, 'node_modules/bootstrap/dist/
 
 // Serve the JavaScript file
 app.get('/script_d3.js', (req, res) => {
-    res.sendFile(path.join(__dirname, '/script_d3.js'));
+  res.sendFile(path.join(__dirname, '/script_d3.js'));
 });
 // Serve the JavaScript file
 app.get('/style.css', (req, res) => {
-    res.sendFile(path.join(__dirname, '/style.css'));
+  res.sendFile(path.join(__dirname, '/style.css'));
 });
 app.listen(port, () => {
   console.log(`Server is running at http://localhost:${port}`);
@@ -27,7 +27,7 @@ app.listen(port, () => {
 
 const fetchData = require('./data');
 const fetchtreeData = require('./treedata');
-
+const fetchrelatedData = require('./relatedData');
 
 app.get('/api/data', async (req, res) => {
   const data = await fetchData();
@@ -36,7 +36,13 @@ app.get('/api/data', async (req, res) => {
 });
 
 app.get('/api/treedata', async (req, res) => {
-    const data1 = await fetchtreeData();
-   // console.log(data1);
-    res.json(data1);
+  const data1 = await fetchtreeData();
+  // console.log(data1);
+  res.json(data1);
+});
+
+app.get('/api/relatedData', async (req, res) => {
+  const data2 = await fetchrelatedData();
+  // console.log(data1);
+  res.json(data2);
 });
