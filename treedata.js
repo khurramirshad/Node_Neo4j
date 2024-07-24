@@ -14,7 +14,7 @@ async function fetchRootNode() {
         if (result.records.length === 0) {
             throw new Error('No records found');
         }
-
+        
         const rootRecord = result.records[0];
         const root = rootRecord.get('root');
 

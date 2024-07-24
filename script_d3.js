@@ -160,10 +160,10 @@ function getLayedData() {
 
 // Define the drag behavior
 const drag = d3.drag()
-    .on("start", function(event, d) {
+    .on("start", function (event, d) {
         d3.select(this).raise().attr("stroke", "black");
     })
-    .on("drag", function(event, d) {
+    .on("drag", function (event, d) {
         if (d) {
             d.x = event.x;
             d.y = event.y;
@@ -171,12 +171,12 @@ const drag = d3.drag()
             updateLinks();
         }
     })
-    .on("end", function(event, d) {
+    .on("end", function (event, d) {
         d3.select(this).attr("stroke", null);
     });
 
 function updateLinks() {
-    d3.selectAll(".link").attr("d", function(d) {
+    d3.selectAll(".link").attr("d", function (d) {
         const source = d.source;
         const target = d.target;
         return `
@@ -189,58 +189,68 @@ function updateLinks() {
 }
 
 async function handleClick(event, d) {
-    console.log('Node clicked:', d);
-    alert(`Node clicked: ${d}`);
+    alert("Node clicked");
+    console.log('Node clicked:', d.data.properties.Name);
 
-    const developers = await fetch('/api/relatedData').then(res => res.json());
-    if (!Array.isArray(developers)) {
-        throw new Error('Expected an array of developers');
+    console.log(d.data.properties.Name);  // Check the value
+
+    try {
+        const children = await fetch(`/api/ChildData?type=${d.data.properties.Name}`).then(res => res.json());
+        if (!Array.isArray(children)) {
+            throw new Error('Expected an array of children');
+        }
+        console.log('Data received', children);
+
+        const svg = d3.select("#graph");
+        const escapedId = d.data.properties.Name.replace(/([@.])/g, '\\$1');
+        const projectNode = svg.select(`#${escapedId}`);
+        //const projectNode = svg.select(`#${d.data.properties.Name}`); // Use the correct ID selector
+
+        // Get the bounding box of the node
+        const bbox = projectNode.node().getBBox();
+        const projectNodeX = bbox.x + bbox.width / 2;
+        const projectNodeY = bbox.y + bbox.height / 2;
+
+        children.forEach((kid, index) => {
+            const newNodeX = projectNodeX + 100; // Adjust the position as needed
+            const newNodeY = projectNodeY + 50 * (index + 1); // Adjust the position as needed
+
+            const newNode = svg.append("g")
+                .attr("class", "node")
+                .attr("transform", `translate(${newNodeX},${newNodeY})`)
+                .call(drag); // Apply the drag behavior
+
+            newNode.append("rect")
+                .attr("width", 100)
+                .attr("height", 40)
+                .attr("x", -30)
+                .attr("y", -10)
+                .attr("id", kid.properties.Name)
+                .attr("class", "child-node")
+                .on("click", (event) => handleClick(event, { data: { properties: kid.properties } })); // Ensure the correct data is passed
+
+            newNode.append("text")
+                .attr("dy", 3)
+                .attr("x", 0)
+                .style("text-anchor", "middle")
+                .text(kid.properties.Name);
+
+            // Draw the link
+            svg.append("path")
+                .attr("class", "link")
+                .datum({ source: { x: projectNodeX, y: projectNodeY }, target: { x: newNodeX, y: newNodeY } })
+                .attr("d", `
+                    M${projectNodeX},${projectNodeY}
+                    C${projectNodeX},${(projectNodeY + newNodeY) / 2}
+                     ${newNodeX},${(projectNodeY + newNodeY) / 2}
+                     ${newNodeX},${newNodeY}
+                `);
+        });
+
+        updateLinks();
+    } catch (error) {
+        console.error('Error fetching children data:', error);
     }
-    const svg = d3.select("#graph");
-    const projectNode = svg.select(`#node-${d.data.id}`); // Use the correct ID selector
-
-    // Get the bounding box of node 0
-    const bbox = projectNode.node().getBBox();
-    const projectNodeX = bbox.x + bbox.width / 2;
-    const projectNodeY = bbox.y + bbox.height / 2;
-
-    developers.forEach((developer, index) => {
-        const newNodeX = projectNodeX + 100; // Adjust the position as needed
-        const newNodeY = projectNodeY + 50 * (index + 1); // Adjust the position as needed
-
-        const newNode = svg.append("g")
-            .attr("class", "node")
-            .attr("transform", `translate(${newNodeX},${newNodeY})`)
-            .call(drag); // Apply the drag behavior
-
-        newNode.append("rect")
-            .attr("width", 100)
-            .attr("height", 40)
-            .attr("x", -30)
-            .attr("y", -10)
-            .attr("id", `node-${developer.id}`)
-            .attr("class", "child-node")
-            .on("click", (event, d) => handleClick(event, developer)); // Ensure the correct data is passed
-
-        newNode.append("text")
-            .attr("dy", 3)
-            .attr("x", 0)
-            .style("text-anchor", "middle")
-            .text(developer.properties.Name);
-
-        // Draw the link
-        svg.append("path")
-            .attr("class", "link")
-            .datum({ source: { x: projectNodeX, y: projectNodeY }, target: { x: newNodeX, y: newNodeY } })
-            .attr("d", `
-                M${projectNodeX},${projectNodeY}
-                C${projectNodeX},${(projectNodeY + newNodeY) / 2}
-                 ${newNodeX},${(projectNodeY + newNodeY) / 2}
-                 ${newNodeX},${newNodeY}
-            `);
-    });
-
-    updateLinks();
 }
 
 async function getRootNode() {
@@ -272,14 +282,14 @@ async function getRootNode() {
 
         const node = g.append("g")
             .attr("class", "node root-node");
-            //.attr("transform", `translate(${width / 2},${height / 2})`);
+        //.attr("transform", `translate(${width / 2},${height / 2})`);
 
         node.append("rect")
             .attr("width", 150)
             .attr("height", 40)
             .attr("x", -50)
             .attr("y", -20)
-            .attr("id", `node-${rootNode.data.id}`)
+            .attr("id", rootNode.data.properties.Name)
             .attr("class", "root-node")
             .on("click", (event, d) => handleClick(event, rootNode));
 

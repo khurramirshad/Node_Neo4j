@@ -27,7 +27,7 @@ app.listen(port, () => {
 
 const fetchData = require('./data');
 const fetchtreeData = require('./treedata');
-const fetchrelatedData = require('./relatedData');
+const fetchChildren = require('./ChildData');
 
 app.get('/api/data', async (req, res) => {
   const data = await fetchData();
@@ -41,8 +41,10 @@ app.get('/api/treedata', async (req, res) => {
   res.json(data1);
 });
 
-app.get('/api/relatedData', async (req, res) => {
-  const data2 = await fetchrelatedData();
-  // console.log(data1);
+app.get('/api/ChildData', async (req, res) => {
+  const { type } = req.query;  // Receiving query parameter 'type
+  console.log(type);
+  const data2 = await fetchChildren(type);
+ 
   res.json(data2);
 });
