@@ -1,5 +1,5 @@
 document.getElementById('loadGraphBtn').addEventListener('click', getFullGraph);
-document.getElementById('loadLayerGraphBtn').addEventListener('click', getRootNode);
+document.getElementById('loadLayerGraphBtn').addEventListener('click', fetchAndRenderRoot);
 //document.getElementById('loadLayerGraphBtn').addEventListener('click', getLayedData);
 
 
@@ -188,84 +188,16 @@ function updateLinks() {
     });
 }
 
-async function handleClick(event, d) {
-    alert("Node clicked");
-    console.log('Node clicked:', d.data.properties.Name);
-
-    console.log(d.data.properties.Name);  // Check the value
-
+async function fetchAndRenderRoot() {
     try {
-        const children = await fetch(`/api/ChildData?type=${d.data.properties.Name}`).then(res => res.json());
-        if (!Array.isArray(children)) {
-            throw new Error('Expected an array of children');
-        }
-        console.log('Data received', children);
-
-        const svg = d3.select("#graph");
-        const escapedId = d.data.properties.Name.replace(/([@.])/g, '\\$1');
-        const projectNode = svg.select(`#${escapedId}`);
-        //const projectNode = svg.select(`#${d.data.properties.Name}`); // Use the correct ID selector
-
-        // Get the bounding box of the node
-        const bbox = projectNode.node().getBBox();
-        const projectNodeX = bbox.x + bbox.width / 2;
-        const projectNodeY = bbox.y + bbox.height / 2;
-
-        children.forEach((kid, index) => {
-            const newNodeX = projectNodeX + 100; // Adjust the position as needed
-            const newNodeY = projectNodeY + 50 * (index + 1); // Adjust the position as needed
-
-            const newNode = svg.append("g")
-                .attr("class", "node")
-                .attr("transform", `translate(${newNodeX},${newNodeY})`)
-                .call(drag); // Apply the drag behavior
-
-            newNode.append("rect")
-                .attr("width", 100)
-                .attr("height", 40)
-                .attr("x", -30)
-                .attr("y", -10)
-                .attr("id", kid.properties.Name)
-                .attr("class", "child-node")
-                .on("click", (event) => handleClick(event, { data: { properties: kid.properties } })); // Ensure the correct data is passed
-
-            newNode.append("text")
-                .attr("dy", 3)
-                .attr("x", 0)
-                .style("text-anchor", "middle")
-                .text(kid.properties.Name);
-
-            // Draw the link
-            svg.append("path")
-                .attr("class", "link")
-                .datum({ source: { x: projectNodeX, y: projectNodeY }, target: { x: newNodeX, y: newNodeY } })
-                .attr("d", `
-                    M${projectNodeX},${projectNodeY}
-                    C${projectNodeX},${(projectNodeY + newNodeY) / 2}
-                     ${newNodeX},${(projectNodeY + newNodeY) / 2}
-                     ${newNodeX},${newNodeY}
-                `);
-        });
-
-        updateLinks();
-    } catch (error) {
-        console.error('Error fetching children data:', error);
-    }
-}
-
-async function getRootNode() {
-    try {
-        const response = await fetch('/api/treedata');
-
+        const response = await fetch('/api/ChildData?type=root');
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        const text = await response.text();
-        let root;
-        try {
-            root = JSON.parse(text);
-        } catch (jsonError) {
+        const root = await response.json();
+
+        if (!root) {
             throw new Error('Malformed JSON data');
         }
 
@@ -275,32 +207,113 @@ async function getRootNode() {
 
         svg.selectAll("*").remove();
 
-        const margin = { top: 20, right: 0, bottom: 0, left: 0 };
-        const g = svg.append("g").attr("transform", `translate(40,${margin.top})`);
+        const margin = { top: 25, right: 0, bottom: 0, left: 0 };
+        const g = svg.append("g");//.attr("transform", `translate(60,${margin.top})`);
 
         const rootNode = d3.hierarchy(root);
-
+        console.log(rootNode);
         const node = g.append("g")
-            .attr("class", "node root-node");
-        //.attr("transform", `translate(${width / 2},${height / 2})`);
+            .attr("class", "node root-node")
+            .call(drag);
 
         node.append("rect")
             .attr("width", 150)
             .attr("height", 40)
-            .attr("x", -50)
-            .attr("y", -20)
-            .attr("id", rootNode.data.properties.Name)
-            .attr("class", "root-node")
-            .on("click", (event, d) => handleClick(event, rootNode));
+            .attr("x", 3)
+            .attr("y", 2)
+            .attr("id", `node-${rootNode.data[0].id}`)
+            .attr("class", "Project")
+            .on("click", (event) => handleClick(event, root[0]));
 
         node.append("text")
-            .attr("dy", 3)
-            .attr("x", 0)
+            .attr("dy", 15)
+            .attr("x", 70)
             .style("text-anchor", "middle")
-            .text(rootNode.data.properties.Name);
+            .text(rootNode.data[0].properties.Name);
 
-        console.log('Root Node:', node);
+
     } catch (error) {
         console.error('Error fetching or processing tree data:', error);
     }
+}
+
+async function handleClick(event, d) {
+    //console.log('Node clicked:', d);
+
+    try {
+        const children = await fetch(`/api/ChildData?type=${d.properties.Name}`).then(res => res.json());
+        if (!Array.isArray(children)) {
+            throw new Error('Expected an array of children');
+        }
+        //console.log('Data received', children);
+
+        const svg = d3.select("svg");
+        // const escapedId = d.data.id.toString().replace(/([@.#])/g, '\\$&');
+        const projectNode = svg.select(`#node-${d.id}`);
+        console.log('Project Node', projectNode.node());
+
+        const bbox = projectNode.node().getBBox();
+        const projectNodeX = bbox.x + bbox.width / 2;
+        const projectNodeY = bbox.y + bbox.height;
+
+          
+
+
+        renderChildren(svg, d.id, children, projectNodeX, projectNodeY);
+    } catch (error) {
+        console.error('Error fetching children data:', error);
+    }
+}
+
+function renderChildren(svg, parentNodeid, children, parentNodeX, parentNodeY) {
+
+    // const parentNode = d3.select(`#node-${parentNodeid}`);      
+    // const bbox = parentNode.node().getBBox();
+    // const parentNodeX = bbox.x + bbox.width / 2;
+    // const parentNodeY = bbox.y + bbox.height ;
+
+
+    children.forEach((kid, index) => {
+        const newNodeX = parentNodeX + 100;
+        const newNodeY = parentNodeY + 50 * (index + 1);
+
+        // console.log("projectNodeX) :",parentNodeid,parentNodeX, newNodeX);
+        // console.log("projectNodeY) :",parentNodeid,parentNodeY,newNodeY);  
+
+        // Draw the link first
+        svg.append("path")
+            .attr("class", "link")
+            .datum({ source: { x: parentNodeX, y: parentNodeY }, target: { x: newNodeX, y: newNodeY } })
+            .attr("d", `
+                M${parentNodeX},${parentNodeY}
+                C${parentNodeX},${(parentNodeY + newNodeY) / 2}
+                 ${newNodeX},${(parentNodeY + newNodeY) / 2}
+                 ${newNodeX},${newNodeY}
+            `);
+
+        // Append the new node after the link
+        const newNode = svg.append("g")
+            .attr("class", "node");
+            //.attr("transform", `translate(${newNodeX},${newNodeY})`);
+            //.call(drag);
+
+            console.log(kid.labels);
+        let classname = kid.labels[0];
+        newNode.append("rect")
+            .attr("width", 150)
+            .attr("height", 40)
+            .attr("x", newNodeX)
+            .attr("y", newNodeY)
+            .attr("id", `node-${kid.id}`)
+            .attr("class", classname)
+            .on("click", (event) => handleClick(event, kid));
+
+        newNode.append("text")
+            .attr("y", newNodeY+20)
+            .attr("x", newNodeX+70)
+            .style("text-anchor", "middle")
+            .text(kid.properties.Name.length > 20 ? kid.properties.Name.substring(0, 20) + '...' : kid.properties.Name);
+    });
+
+    updateLinks();
 }

@@ -11,9 +11,12 @@ async function fetchChildren(type) {
         let query;
         if (type === 'FoodDeliveryProject') {
             query = "MATCH (developer:Developer)-[:WORKS_ON]->(project:Project {ProjectId: 'FoodDeliveryProject'}) RETURN developer";
+        } else if (type === 'root') {
+            query = "MATCH (developer:Project) RETURN developer LIMIT 1";
         } else if (type === 'Developer') {
             query = "MATCH (developer:Commit)-[:WORKS_ON]->(project:Project) RETURN developer";
-        } else {
+        } 
+        else {
             query = "MATCH (developer:Commit)-[:Commited_BY]->(d:Developer {Name: 'khuram.irshad@gmail.com'}) RETURN developer";
             
         }
