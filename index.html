@@ -32,19 +32,19 @@
                 <form>
                     <div class="form-inline">
                       <div class="col-4">
-                        <input type="text" class="form-control" placeholder="Enter Node Name">
+                        <input type="text" class="form-control" id="searchNodeName" placeholder="Enter Node Name">
                       </div>
                       <div class="col-4">
-                        <select class="form-control" id="exampleFormControlSelect1">
-                            <option>Project</option>
-                            <option>Developer</option>
-                            <option>Commit</option>
-                            <option>Class</option>
-                            <option>Method</option>
+                        <select class="form-control" id="selectNodeType">
+                            <option value="Project">Project</option>
+                            <option Value="Developer">Developer</option>
+                            <option value="Commit">Commit</option>
+                            <option value="Class">Class</option>
+                            <option value="Method">Method</option>
                           </select>
                       </div>
                       <div class="col-2">
-                        <button type="button" class="btn btn-primary mb-2">Search Node</button>
+                        <button type="button" id="BtnSearchNode" class="btn btn-primary mb-2">Search Node</button>
                       </div>
                     </div>
                   </form>
@@ -63,8 +63,8 @@
                    
                     <button type="button" Id="loadGraphBtn" class="list-group-item list-group-item-action"> Circle Graph Complete</button>
                     <button type="button" Id="loadLayerGraphBtn" class="list-group-item list-group-item-action">Layered Graph</button>
-                    <button type="button" class="list-group-item list-group-item-action">Graph Classes</button>
-                    <button type="button" class="list-group-item list-group-item-action">Implementation</button>
+                    <button type="button" Id="loadClasses" class="list-group-item list-group-item-action">Graph Classes</button>
+                    <button type="button" Id="loadImplementation" class="list-group-item list-group-item-action">Implementation</button>
                   </div>
             </div>
             <div class="col-10">

@@ -31,7 +31,7 @@
 }
 
 .node text {
-    font: 12px sans-serif;
+    font: 10px sans-serif;
 }
 .svg-container {
     width: 100%;
@@ -40,8 +40,9 @@
     border: 1px solid #ccc; /* Optional: for visual reference */
   }
   svg {
-    width: 1000px; /* Set a width larger than the container to enable scrolling */
+    width: 1250px; /* Set a width larger than the container to enable scrolling */
     height: 800px; /* Set a height larger than the container to enable scrolling */
+  
   }
 
   .Project{
@@ -54,5 +55,10 @@
 
   .Commit{
     fill: green;
+    color:white;
+  }
+
+  .Class{
+    fill: blueviolet;
     color:white;
   }

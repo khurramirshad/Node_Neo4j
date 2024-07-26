@@ -43,8 +43,10 @@ app.get('/api/treedata', async (req, res) => {
 
 app.get('/api/ChildData', async (req, res) => {
   const { type } = req.query;  // Receiving query parameter 'type
+  const { id } = req.query; 
+  const { ent } = req.query; 
   console.log(type);
-  const data2 = await fetchChildren(type);
+  const data2 = await fetchChildren(type,id,ent);
  
   res.json(data2);
 });

@@ -1,11 +1,17 @@
 document.getElementById('loadGraphBtn').addEventListener('click', getFullGraph);
 document.getElementById('loadLayerGraphBtn').addEventListener('click', fetchAndRenderRoot);
-//document.getElementById('loadLayerGraphBtn').addEventListener('click', getLayedData);
+document.getElementById('loadImplementation').addEventListener('click', getLayedData);
+document.getElementById('BtnSearchNode').addEventListener('click', getSearchGraph);
 
+function getSearchGraph() {
+    const ent = document.getElementById('selectNodeType').value;
+    const id = document.getElementById('searchNodeName').value;
+    const type = "Search";
+    fetchAndRenderRoot(type, id, ent);
 
+}
 
 function getFullGraph() {
-
     fetch('/api/data')
         .then(response => response.json())
         .then(graph => {
@@ -16,9 +22,9 @@ function getFullGraph() {
             svg.selectAll("*").remove();
 
             const simulation = d3.forceSimulation()
-                .force("link", d3.forceLink().distance(70))
+                .force("link", d3.forceLink().distance(150))
                 .force("charge", d3.forceManyBody())
-                .force("center", d3.forceCenter(width / 2, height / 2));
+                .force("center", d3.forceCenter((width / 2) + 200, (height / 2) + 350));
 
             const link = svg.append("g")
                 .attr("class", "links")
@@ -36,7 +42,7 @@ function getFullGraph() {
 
             node.append("circle")
                 .attr("class", "node")
-                .attr("r", 15)
+                .attr("r", 20)
                 .style("fill", function (d) {
                     if (d.labels.includes("Commit")) {
                         return "red";
@@ -55,7 +61,6 @@ function getFullGraph() {
 
             node.append("text")
                 .attr("class", "label")
-                //.text(d => d.properties.Name); // Assuming each node has a 'name' property
                 .text(d => d.properties.Name.length > 7 ? d.properties.Name.substring(0, 7) + '...' : d.properties.Name);
 
             simulation
@@ -122,7 +127,7 @@ function getLayedData() {
     // Clear existing SVG content
     svg.selectAll("*").remove();
 
-    const g = svg.append("g").attr("transform", "translate(40,0)");
+    const g = svg.append("g").attr("transform", "translate(60,50)");
 
     const tree = d3.tree().size([height, width - 160]);
 
@@ -188,9 +193,18 @@ function updateLinks() {
     });
 }
 
-async function fetchAndRenderRoot() {
+async function fetchAndRenderRoot(type, id, ent) {
+
+    if (type == null || id == null) {
+
+        type = "root";
+        id = "none";
+        ent="none";
+    }
+
     try {
-        const response = await fetch('/api/ChildData?type=root');
+        // const response = await fetch(`/api/ChildData?type=root`);
+        const response = await fetch(`/api/ChildData?id=${id}&type=${type}&ent=${ent}`);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -241,7 +255,9 @@ async function handleClick(event, d) {
     //console.log('Node clicked:', d);
 
     try {
-        const children = await fetch(`/api/ChildData?type=${d.properties.Name}`).then(res => res.json());
+        // const children = await fetch(`/api/ChildData?type=${d.properties.Name}`).then(res => res.json());
+        const children = await fetch(`/api/ChildData?id=${d.properties.Name}&type=${d.labels[0]}`)
+            .then(res => res.json());
         if (!Array.isArray(children)) {
             throw new Error('Expected an array of children');
         }
@@ -254,7 +270,7 @@ async function handleClick(event, d) {
 
         const bbox = projectNode.node().getBBox();
         const projectNodeX = bbox.x + bbox.width / 2;
-        const projectNodeY = bbox.y + bbox.height;       
+        const projectNodeY = bbox.y + bbox.height;
 
 
         renderChildren(svg, d.id, children, projectNodeX, projectNodeY);
@@ -292,10 +308,10 @@ function renderChildren(svg, parentNodeid, children, parentNodeX, parentNodeY) {
         // Append the new node after the link
         const newNode = svg.append("g")
             .attr("class", "node");
-            //.attr("transform", `translate(${newNodeX},${newNodeY})`);
-            //.call(drag);
+        //.attr("transform", `translate(${newNodeX},${newNodeY})`);
+        //.call(drag);
 
-            console.log(kid.labels);
+        console.log(kid.labels);
         let classname = kid.labels[0];
         newNode.append("rect")
             .attr("width", 150)
@@ -307,8 +323,8 @@ function renderChildren(svg, parentNodeid, children, parentNodeX, parentNodeY) {
             .on("click", (event) => handleClick(event, kid));
 
         newNode.append("text")
-            .attr("y", newNodeY+20)
-            .attr("x", newNodeX+70)
+            .attr("y", newNodeY + 20)
+            .attr("x", newNodeX + 70)
             .style("text-anchor", "middle")
             .text(kid.properties.Name.length > 20 ? kid.properties.Name.substring(0, 20) + '...' : kid.properties.Name);
     });

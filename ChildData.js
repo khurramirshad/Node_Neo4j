@@ -5,19 +5,28 @@ const PASSWORD = '12345678';
 
 const driver = neo4j.driver(URI, neo4j.auth.basic(USER, PASSWORD));
 
-async function fetchChildren(type) {
+async function fetchChildren(type,id,ent) {
     const session = driver.session();
     try {
         let query;
-        if (type === 'FoodDeliveryProject') {
-            query = "MATCH (developer:Developer)-[:WORKS_ON]->(project:Project {ProjectId: 'FoodDeliveryProject'}) RETURN developer";
+        if (type === 'Project') {
+            query =`MATCH (developer:Developer)-[:WORKS_ON]->(project:Project {ProjectId: '${id}'}) RETURN developer`;;
         } else if (type === 'root') {
-            query = "MATCH (developer:Project) RETURN developer LIMIT 1";
+            query = `MATCH (developer:Project) RETURN developer LIMIT 1`;
         } else if (type === 'Developer') {
-            query = "MATCH (developer:Commit)-[:WORKS_ON]->(project:Project) RETURN developer";
+            query = `MATCH (developer:Commit)-[:Commited_BY]->(d:Developer {Name: '${id}'}) RETURN developer`;
+        } 
+        else if (type === 'Commit') {
+            query = `MATCH (developer:Class)-[:Updated_in]->(c:Commit {Name: '${id}'}) RETURN developer`;
+        } 
+        else if (type === 'Class') {
+            query = `MATCH (developer:Method)-[:Modified_In]->(c:Class {Name: '${id}'}) RETURN developer`;
+        } 
+        else if (type === 'Search') {
+            query = `MATCH (developer: ${ent} {Name: '${id}'}) RETURN developer`;
         } 
         else {
-            query = "MATCH (developer:Commit)-[:Commited_BY]->(d:Developer {Name: 'khuram.irshad@gmail.com'}) RETURN developer";
+            query = `MATCH (developer:Class)-[:Updated_in]->(c:Commit {Name: '60d3474d553f47445c38757ffb75fc6417114223'}) RETURN developer`;
             
         }
         console.log(query);
