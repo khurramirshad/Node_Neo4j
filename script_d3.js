@@ -210,10 +210,8 @@ async function fetchAndRenderRoot(type, id, ent) {
         }
 
         const root = await response.json();
-
-        if (!root) {
-            throw new Error('Malformed JSON data');
-        }
+        console.log("Error in record",root);
+        
 
         const svg = d3.select("svg"),
             width = +svg.attr("width"),

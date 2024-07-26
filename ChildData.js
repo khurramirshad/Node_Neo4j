@@ -26,15 +26,16 @@ async function fetchChildren(type,id,ent) {
             query = `MATCH (developer: ${ent} {Name: '${id}'}) RETURN developer`;
         } 
         else {
+
             query = `MATCH (developer:Class)-[:Updated_in]->(c:Commit {Name: '60d3474d553f47445c38757ffb75fc6417114223'}) RETURN developer`;
             
         }
         console.log(query);
         const result = await session.run(query);
-
+        console.log("result.records.length",result.records.length);
         if (result.records.length === 0) {
-            throw new Error('No records found');
-        }
+            return {data:[{ERROR:'No records found'}]};
+        }else{
 
         const developers = result.records.map(record => {
             const developer = record.get('developer');
@@ -44,9 +45,10 @@ async function fetchChildren(type,id,ent) {
                 properties: developer.properties
             };
         });
-
-        //console.log(developers);
         return developers;
+    }
+        //console.log(developers);
+       
     } catch (error) {
         console.error('Error fetching data:', error);
         throw error; // Re-throw the error after logging it
