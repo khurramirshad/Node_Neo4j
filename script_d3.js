@@ -254,9 +254,7 @@ async function handleClick(event, d) {
 
         const bbox = projectNode.node().getBBox();
         const projectNodeX = bbox.x + bbox.width / 2;
-        const projectNodeY = bbox.y + bbox.height;
-
-          
+        const projectNodeY = bbox.y + bbox.height;       
 
 
         renderChildren(svg, d.id, children, projectNodeX, projectNodeY);
