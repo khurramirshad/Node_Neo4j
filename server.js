@@ -46,7 +46,6 @@ app.get('/api/ChildData', async (req, res) => {
   const { id } = req.query; 
   const { ent } = req.query; 
   console.log(type);
-  const data2 = await fetchChildren(type,id,ent);
- 
+  const data2 = await fetchChildren(type,id,ent); 
   res.json(data2);
 });

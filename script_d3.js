@@ -259,7 +259,7 @@ async function handleClick(event, d) {
         if (!Array.isArray(children)) {
             throw new Error('Expected an array of children');
         }
-        //console.log('Data received', children);
+        console.log('Data received', children);
 
         const svg = d3.select("svg");
         // const escapedId = d.data.id.toString().replace(/([@.#])/g, '\\$&');
@@ -290,8 +290,7 @@ function renderChildren(svg, parentNodeid, children, parentNodeX, parentNodeY) {
         const newNodeY = parentNodeY + 50 * (index + 1);
 
         // console.log("projectNodeX) :",parentNodeid,parentNodeX, newNodeX);
-        // console.log("projectNodeY) :",parentNodeid,parentNodeY,newNodeY);  
-
+        // console.log("projectNodeY) :",parentNodeid,parentNodeY,newNodeY); 
         // Draw the link first
         svg.append("path")
             .attr("class", "link")
